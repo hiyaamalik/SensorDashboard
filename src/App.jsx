@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Download, Clock, BarChart2, Calendar } from 'lucide-react';
 import './Dashboard.css';
 
@@ -24,7 +24,7 @@ export default function SensorDashboard() {
     endDate: '2025-05-07'
   });
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [chartType, setChartType] = useState('line');
+  const [chartType, setChartType] = useState('line'); // 'line', 'bar', or 'area'
 
   // Simulate real-time data updates
   useEffect(() => {
@@ -79,44 +79,52 @@ export default function SensorDashboard() {
   const currentData = mode === 'realtime' ? realtimeData : historyData;
   
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
+    <div className="dashboard-container">
       {/* Header */}
-      <header className="bg-blue-600 text-white p-4">
-        <h1 className="text-2xl font-bold">Sensor Data Dashboard</h1>
+      <header className="dashboard-header">
+        <h1>Sensor Data Dashboard</h1>
       </header>
       
       {/* Main content */}
-      <main className="flex flex-col flex-grow p-4">
+      <main className="dashboard-main">
         {/* Mode selector */}
-        <div className="flex bg-white rounded-lg shadow mb-6">
-          <button 
-            className={`flex items-center p-4 ${mode === 'realtime' ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600'}`}
-            onClick={() => handleModeChange('realtime')}
-          >
-            <Clock className="mr-2 h-5 w-5" />
-            Real-time Monitoring
-          </button>
-          <button 
-            className={`flex items-center p-4 ${mode === 'history' ? 'bg-blue-100 text-blue-600 font-medium' : 'text-gray-600'}`}
-            onClick={() => handleModeChange('history')}
-          >
-            <BarChart2 className="mr-2 h-5 w-5" />
-            Historical Reports
-          </button>
+        <div className="mode-selector">
+          <div className="mode-selector-container">
+            <button 
+              className={`mode-button ${mode === 'realtime' ? 'active' : ''}`}
+              onClick={() => handleModeChange('realtime')}
+            >
+              <Clock className="icon" />
+              Real-time Monitoring
+            </button>
+            <button 
+              className={`mode-button ${mode === 'history' ? 'active' : ''}`}
+              onClick={() => handleModeChange('history')}
+            >
+              <BarChart2 className="icon" />
+              Historical Reports
+            </button>
+          </div>
         </div>
         
-        {/* Dashboard content based on mode */}
-        <div className="bg-white rounded-lg shadow p-6 flex-grow">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">
-              {mode === 'realtime' ? 'Real-time Sensor Data' : 'Historical Sensor Data'}
-            </h2>
+        {/* Dashboard content */}
+        <div className="dashboard-content">
+          <div className="control-panel">
+            <div className="control-group">
+              <h2 className="dashboard-section-title">
+                {mode === 'realtime' ? 'Real-time Sensor Data' : 'Historical Sensor Data'}
+              </h2>
+              {mode === 'realtime' && (
+                <div className="realtime-indicator">
+                  <span className="realtime-indicator-dot"></span>
+                  Live
+                </div>
+              )}
+            </div>
             
-            {/* Controls based on mode */}
-            <div className="flex items-center">
-              {/* Sensor selector - shown in both modes */}
+            <div className="control-group">
+              {/* Sensor selector */}
               <select 
-                className="mr-4 p-2 border rounded"
                 value={selectedSensor}
                 onChange={(e) => setSelectedSensor(e.target.value)}
               >
@@ -128,38 +136,33 @@ export default function SensorDashboard() {
               {/* Mode-specific controls */}
               {mode === 'history' && (
                 <>
-                  <div className="flex items-center mr-4">
-                    <Calendar className="mr-2 h-5 w-5 text-gray-500" />
+                  <div className="date-range-selector">
+                    <Calendar className="icon" />
                     <input 
                       type="date" 
-                      className="p-2 border rounded"
                       value={dateRange.startDate}
                       onChange={(e) => setDateRange({...dateRange, startDate: e.target.value})}
                     />
-                    <span className="mx-2">to</span>
+                    <span>to</span>
                     <input 
                       type="date" 
-                      className="p-2 border rounded"
                       value={dateRange.endDate}
                       onChange={(e) => setDateRange({...dateRange, endDate: e.target.value})}
                     />
                   </div>
                   <button 
-                    className={`flex items-center bg-blue-600 text-white px-4 py-2 rounded ${isGeneratingReport ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    className={`button button-primary ${isGeneratingReport ? 'loading' : ''}`}
                     onClick={handleGenerateReport}
                     disabled={isGeneratingReport}
                   >
                     {isGeneratingReport ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <span className="loading-spinner"></span>
                         Processing...
                       </>
                     ) : (
                       <>
-                        <Download className="mr-2 h-5 w-5" />
+                        <Download className="icon" />
                         Download Report
                       </>
                     )}
@@ -169,31 +172,32 @@ export default function SensorDashboard() {
             </div>
           </div>
           
-          {/* Chart type selector for history mode */}
-          {mode === 'history' && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Chart Type:</label>
-              <div className="flex space-x-4">
-                <button
-                  className={`px-4 py-2 rounded ${chartType === 'line' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100'}`}
-                  onClick={() => setChartType('line')}
-                >
-                  Line Chart
-                </button>
-                <button
-                  className={`px-4 py-2 rounded ${chartType === 'bar' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100'}`}
-                  onClick={() => setChartType('bar')}
-                >
-                  Bar Chart
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Chart type selector */}
+          <div className="chart-type-selector">
+            <button
+              className={`chart-type-button ${chartType === 'line' ? 'active' : ''}`}
+              onClick={() => setChartType('line')}
+            >
+              Line Chart
+            </button>
+            <button
+              className={`chart-type-button ${chartType === 'bar' ? 'active' : ''}`}
+              onClick={() => setChartType('bar')}
+            >
+              Bar Chart
+            </button>
+            <button
+              className={`chart-type-button ${chartType === 'area' ? 'active' : ''}`}
+              onClick={() => setChartType('area')}
+            >
+              Area Chart
+            </button>
+          </div>
           
           {/* Chart area */}
-          <div className="h-64">
+          <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
-              {(mode === 'realtime' || chartType === 'line') ? (
+              {chartType === 'line' ? (
                 <LineChart data={currentData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="timestamp" />
@@ -206,9 +210,10 @@ export default function SensorDashboard() {
                     stroke="#3B82F6" 
                     strokeWidth={2} 
                     dot={false} 
+                    activeDot={{ r: 6 }}
                   />
                 </LineChart>
-              ) : (
+              ) : chartType === 'bar' ? (
                 <BarChart data={currentData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="timestamp" />
@@ -218,68 +223,61 @@ export default function SensorDashboard() {
                   <Bar 
                     dataKey={selectedSensor} 
                     fill="#3B82F6" 
+                    radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
+              ) : (
+                <AreaChart data={currentData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="timestamp" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Area 
+                    type="monotone" 
+                    dataKey={selectedSensor} 
+                    stroke="#3B82F6" 
+                    fill="#3B82F6"
+                    fillOpacity={0.2}
+                    strokeWidth={2}
+                    activeDot={{ r: 6 }}
+                  />
+                </AreaChart>
               )}
             </ResponsiveContainer>
           </div>
           
           {/* Metrics overview */}
-          <div className="grid grid-cols-3 gap-4 mt-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="text-sm text-gray-500 uppercase">Temperature</h3>
-              <p className="text-2xl font-semibold">
-                {currentData.length ? currentData[currentData.length - 1]?.temperature.toFixed(1) : '--'} °C
+          <div className="metrics-grid">
+            <div className="metric-card temperature-card">
+              <h3 className="metric-title">Temperature</h3>
+              <p className="metric-value">
+                {currentData.length ? currentData[currentData.length - 1]?.temperature.toFixed(1) : '--'}
               </p>
+              <p className="metric-unit">°C</p>
             </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="text-sm text-gray-500 uppercase">Humidity</h3>
-              <p className="text-2xl font-semibold">
-                {currentData.length ? currentData[currentData.length - 1]?.humidity.toFixed(1) : '--'} %
+            <div className="metric-card humidity-card">
+              <h3 className="metric-title">Humidity</h3>
+              <p className="metric-value">
+                {currentData.length ? currentData[currentData.length - 1]?.humidity.toFixed(1) : '--'}
               </p>
+              <p className="metric-unit">%</p>
             </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="text-sm text-gray-500 uppercase">Pressure</h3>
-              <p className="text-2xl font-semibold">
-                {currentData.length ? currentData[currentData.length - 1]?.pressure.toFixed(1) : '--'} hPa
+            <div className="metric-card pressure-card">
+              <h3 className="metric-title">Pressure</h3>
+              <p className="metric-value">
+                {currentData.length ? currentData[currentData.length - 1]?.pressure.toFixed(1) : '--'}
               </p>
+              <p className="metric-unit">hPa</p>
             </div>
           </div>
         </div>
       </main>
       
       {/* Footer */}
-      <footer className="bg-gray-800 text-white p-4 text-center">
+      <footer className="dashboard-footer">
         <p>Sensor Dashboard - Demo Version</p>
       </footer>
     </div>
   );
 }
-
-{mode === 'realtime' && (
-  <div className="realtime-indicator">
-    <span className="realtime-indicator-dot"></span>
-    Live
-  </div>
-)}
-{/* Chart type selector - shown in both modes */}
-<div className="chart-type-selector">
-  <button
-    className={`chart-type-button ${chartType === 'line' ? 'active' : ''}`}
-    onClick={() => setChartType('line')}
-  >
-    Line Chart
-  </button>
-  <button
-    className={`chart-type-button ${chartType === 'bar' ? 'active' : ''}`}
-    onClick={() => setChartType('bar')}
-  >
-    Bar Chart
-  </button>
-  <button
-    className={`chart-type-button ${chartType === 'area' ? 'active' : ''}`}
-    onClick={() => setChartType('area')}
-  >
-    Area Chart
-  </button>
-</div>
